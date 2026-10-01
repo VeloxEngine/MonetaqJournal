@@ -5,8 +5,7 @@
   "main": "index.html",
   "scripts": {
     "dev": "serve . -l 3000",
-    "start": "serve . -l 3000",
-    "build": "echo \"Static assets ready for deployment.\""
+    "start": "serve . -l 3000"
   },
   "keywords": [
     "dark-mode",
