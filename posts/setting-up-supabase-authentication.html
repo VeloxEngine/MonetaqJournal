@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setting Up Supabase Authentication for Beginners | Monetaq Tech Journal</title>
+  <meta name="description" content="A beginner-friendly yet technically rigorous guide to implementing secure user authentication with Supabase, JWTs, and PostgreSQL Row Level Security.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <header class="site-header">
+    <div class="header-container">
+      <a href="../index.html" class="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">Overview</a></li>
+          <li><a href="../index.html#articles">Articles</a></li>
+          <li><a href="../privacy.html">Privacy</a></li>
+          <li><a href="../terms.html">Terms</a></li>
+          <li><a href="../disclaimer.html">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="article-container">
+      <header class="article-header">
+        <a href="../index.html" class="back-nav">&larr; Back to all essays</a>
+        <span class="post-tag">Backend & Auth</span>
+        <h1>Setting Up Supabase Authentication for Beginners</h1>
+        <div class="article-meta">
+          <span>By Engineering Team</span>
+          <span>&bull;</span>
+          <span>October 2026</span>
+          <span>&bull;</span>
+          <span>7 min read</span>
+          <span>&bull;</span>
+          <span>Identity Architecture</span>
+        </div>
+      </header>
+
+      <div class="prose">
+        <p>
+          Managing authentication has traditionally been one of the most tedious and security-sensitive requirements when building a web application. Between salting password hashes, signing JSON Web Tokens (JWTs), rotating refresh tokens, and guarding session cookies against Cross-Site Scripting (XSS), custom authentication layers often accumulate critical vulnerabilities. Supabase solves this by wrapping the battle-tested, open-source <strong>GoTrue</strong> identity engine directly around a managed PostgreSQL database.
+        </p>
+
+        <h2>1. The Foundation: How Supabase Auth Works Under the Hood</h2>
+        <p>
+          Unlike disconnected third-party authentication services, Supabase couples identity directly with the database engine. When a user registers:
+        </p>
+        <ol>
+          <li>A new record is inserted into the protected schema <code>auth.users</code>.</li>
+          <li>Supabase issues a signed JWT containing the user's UUID (<code>sub</code>), email, and granted roles.</li>
+          <li>Every subsequent client request attaches this token as an <code>Authorization: Bearer &lt;JWT&gt;</code> header.</li>
+          <li>PostgreSQL decodes the token within its connection context, exposing helper functions like <code>auth.uid()</code> and <code>auth.role()</code> directly to SQL queries and Row Level Security (RLS) policies.</li>
+        </ol>
+
+        <div class="callout">
+          <div class="callout-title">Security Note: The Service Role Key Warning</div>
+          <p>
+            Supabase provides two primary API keys: the <code>anon</code> public key and the <code>service_role</code> secret key. The <code>anon</code> key is safe for client-side browsers and respects RLS. The <code>service_role</code> key bypasses all RLS checks; it must NEVER be committed to client code or exposed in frontend bundles.
+          </p>
+        </div>
+
+        <h2>2. Initializing the Supabase Client in JavaScript</h2>
+        <p>
+          To begin, install the official client library via your package manager:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>npm install @supabase/supabase-js</code></pre>
+        </div>
+
+        <p>
+          Create an isolated client singleton helper that pulls configuration from your environment variables:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>lib/supabaseClient.js</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xyzcompany.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'public-anon-key';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});</code></pre>
+        </div>
+
+        <h2>3. Implementing Email & Password Authentication</h2>
+        <p>
+          Supabase provides straightforward asynchronous methods for sign-up, sign-in, and sign-out workflows:
+        </p>
+
+        <h3>User Registration (Sign Up)</h3>
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>services/authService.js</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>export async function registerUser(email, password, fullName) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+      },
+      emailRedirectTo: 'https://yourapp.com/auth/callback',
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.user;
+}</code></pre>
+        </div>
+
+        <h3>User Authentication (Sign In)</h3>
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>services/authService.js</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>export async function loginUser(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.session;
+}</code></pre>
+        </div>
+
+        <h2>4. Listening for Real-time Auth State Changes</h2>
+        <p>
+          To maintain responsive UI state (e.g., toggling navigation bars between Login and Dashboard buttons), hook into the client state listener:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>app/auth-listener.js</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN') {
+    console.log('User signed in successfully:', session.user.id);
+  } else if (event === 'SIGNED_OUT') {
+    console.log('User signed out');
+  }
+});
+
+// Clean up listener when component unmounts
+// subscription.unsubscribe();</code></pre>
+        </div>
+
+        <h2>5. Enabling Row Level Security (RLS)</h2>
+        <p>
+          Authentication is meaningless if users can modify one another's records. Always enforce PostgreSQL Row Level Security on your application tables. For example, if you maintain a <code>profiles</code> table, execute this SQL script inside the Supabase SQL Editor:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>Database SQL Migration</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>-- 1. Enable Row Level Security
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- 2. Allow users to read only their own profile
+CREATE POLICY "Users can view own profile" 
+ON public.profiles 
+FOR SELECT 
+USING (auth.uid() = id);
+
+-- 3. Allow users to update their own profile
+CREATE POLICY "Users can update own profile" 
+ON public.profiles 
+FOR UPDATE 
+USING (auth.uid() = id);</code></pre>
+        </div>
+
+        <h2>6. Conclusion and Next Steps</h2>
+        <p>
+          By offloading token issuance, email verification, and OAuth provider connections to Supabase Auth while guarding table rows through PostgreSQL RLS, you build a zero-trust architecture right from day one. You eliminate the need for complicated authentication microservices while maintaining full portability and control over your database.
+        </p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>A technical engineering publication focused on minimalist web architecture, database design, and cloud performance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="../index.html">Articles Directory</a></li>
+            <li><a href="setting-up-supabase-authentication.html">Supabase Auth</a></li>
+            <li><a href="structuring-relational-databases-in-supabase.html">Database Schemas</a></li>
+            <li><a href="building-restful-apis-supabase-nextjs.html">RESTful APIs</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="../privacy.html">Privacy Policy</a></li>
+            <li><a href="../terms.html">Terms of Service</a></li>
+            <li><a href="../disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. All rights reserved. Strict dark theme.</span>
+        <span>Built with pure HTML, CSS, and Vanilla JS.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

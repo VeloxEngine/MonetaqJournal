@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Disclaimer | Monetaq Tech Journal</title>
+  <meta name="description" content="Formal Technical Disclaimer governing code execution, cloud infrastructure costs, software security auditing, and trademark acknowledgments.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="index.html#articles">Articles</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="terms.html">Terms</a></li>
+          <li><a href="disclaimer.html" class="active">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="legal-container">
+      <header class="legal-header">
+        <a href="index.html" class="back-nav">&larr; Back to Home</a>
+        <h1>Technical Disclaimer</h1>
+        <p class="legal-date">Last Updated: October 1, 2026 &bull; Effective Date: October 1, 2026</p>
+      </header>
+
+      <div class="prose">
+        <h2>1. Educational and Informational Nature Only</h2>
+        <p>
+          The technical tutorials, engineering guides, database architectural schemas, benchmark evaluations, and software code provided on Monetaq Tech Journal ("Monetaq") are published strictly for educational, informational, and research purposes.
+        </p>
+        <p>
+          Nothing contained on this website constitutes formal professional engineering consulting, cryptographic advisory, certified legal counsel, or architectural guarantees. You assume full and unmitigated responsibility for evaluating, testing, and verifying any code, script, or configuration before executing it in production environments.
+        </p>
+
+        <h2>2. Software and Code Execution Disclaimer ("As-Is")</h2>
+        <p>
+          All source code, SQL migration scripts, Dockerfiles, YAML pipelines, and JavaScript/TypeScript examples are provided on an <strong>"AS-IS"</strong> and <strong>"AS-AVAILABLE"</strong> basis without warranty of any kind, whether express or implied.
+        </p>
+        <p>
+          While our editorial team endeavors to test and validate snippets against current runtime versions, Monetaq does not guarantee that:
+        </p>
+        <ul>
+          <li>Code samples will execute without errors across all operating system distributions or compiler toolchains.</li>
+          <li>Configurations are free from subtle security vulnerabilities, memory leaks, or race conditions.</li>
+          <li>Scripts will not produce unintentional side effects, including database deadlocks, data truncation, or unexpected container termination.</li>
+        </ul>
+
+        <div class="callout">
+          <div class="callout-title">Mandatory Staging Requirement</div>
+          <p>
+            You must rigorously execute, audit, and benchmark all code snippets inside an isolated non-production sandbox (staging or local environment) before introducing them into any commercial, enterprise, or mission-critical production codebase.
+          </p>
+        </div>
+
+        <h2>3. Cloud Infrastructure Costs and Billing Liabilities</h2>
+        <p>
+          Many architectures discussed on Monetaq utilize modern pay-as-you-go serverless and edge compute platforms (including Vercel, Supabase, Cloudflare, Amazon Web Services, and Google Cloud Platform). 
+        </p>
+        <p>
+          You acknowledge that improperly configured edge functions, infinite recursion loops in API Route Handlers, high-frequency database triggers, un-cached CDN origin requests, or distributed denial-of-service (DDoS) traffic spikes can generate sudden, substantial financial charges from your respective cloud service providers.
+        </p>
+        <p>
+          <strong>MONETAQ EXPRESSLY DISCLAIMS ANY AND ALL LIABILITY FOR UNEXPECTED CLOUD BILLING CHARGES, FINANCIAL LOSSES, OR OVERAGE EXPENSES INCURRED ON YOUR THIRD-PARTY CLOUD ACCOUNTS AS A RESULT OF APPLYING CONCEPTS OR CODE FROM OUR ARTICLES.</strong> You are solely responsible for setting hard billing caps, automated budget threshold alerts, and usage monitoring on your own cloud provider dashboards.
+        </p>
+
+        <h2>4. Rapid Framework Evolution and Version Drift</h2>
+        <p>
+          Modern web development frameworks (such as Next.js, React, Node.js, and Supabase) evolve at an aggressive cadence. APIs, routing conventions, CLI syntax, and recommended design patterns may become deprecated or modified after an article's initial publication date. We recommend checking official upstream vendor documentation to confirm compatibility with your current software dependencies.
+        </p>
+
+        <h2>5. Trademark and Third-Party Brand Acknowledgments</h2>
+        <p>
+          All product names, logos, trademarks, and registered trademarks mentioned throughout our articles and documentation are the property of their respective holders:
+        </p>
+        <ul>
+          <li><strong>Next.js and Vercel</strong> are registered trademarks of Vercel Inc.</li>
+          <li><strong>Supabase and PostgreSQL</strong> are trademarks or registered marks of Supabase Inc. and PostgreSQL Global Development Group respectively.</li>
+          <li><strong>Cloudflare and Cloudflare Workers</strong> are registered trademarks of Cloudflare Inc.</li>
+          <li><strong>Apple, San Francisco, and Retina</strong> are trademarks of Apple Inc.</li>
+        </ul>
+        <p>
+          Reference to any specific commercial product, process, service, manufacturer, or company does not constitute or imply endorsement, sponsorship, or recommendation by Monetaq or vice versa.
+        </p>
+
+        <h2>6. Contact Regarding Technical Clarifications</h2>
+        <p>
+          If you identify an error, security vulnerability, or critical bug in any code snippet published on our platform, we invite you to report it to our editorial engineering team at <a href="mailto:engineering@monetaq.example.com">engineering@monetaq.example.com</a>.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>A technical engineering publication focused on minimalist web architecture, database design, and cloud performance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="index.html">Articles Directory</a></li>
+            <li><a href="posts/deploying-nextjs-on-vercel.html">Next.js Deployment</a></li>
+            <li><a href="posts/edge-computing-vercel-vs-cloudflare-workers.html">Edge Computing</a></li>
+            <li><a href="posts/best-programming-stacks-fast-prototyping.html">Prototyping Stacks</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+            <li><a href="disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. All rights reserved. Strict dark theme.</span>
+        <span>Built with pure HTML, CSS, and Vanilla JS.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

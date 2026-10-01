@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Building RESTful APIs with Supabase and Next.js | Monetaq Tech Journal</title>
+  <meta name="description" content="A comprehensive engineering guide to constructing secure, scalable RESTful APIs with Next.js App Router Route Handlers, Supabase PostgreSQL, and Zod validation.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <header class="site-header">
+    <div class="header-container">
+      <a href="../index.html" class="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">Overview</a></li>
+          <li><a href="../index.html#articles">Articles</a></li>
+          <li><a href="../privacy.html">Privacy</a></li>
+          <li><a href="../terms.html">Terms</a></li>
+          <li><a href="../disclaimer.html">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="article-container">
+      <header class="article-header">
+        <a href="../index.html" class="back-nav">&larr; Back to all essays</a>
+        <span class="post-tag">API & Backend</span>
+        <h1>Building RESTful APIs with Supabase and Next.js</h1>
+        <div class="article-meta">
+          <span>By Engineering Team</span>
+          <span>&bull;</span>
+          <span>October 2026</span>
+          <span>&bull;</span>
+          <span>9 min read</span>
+          <span>&bull;</span>
+          <span>Backend Architecture</span>
+        </div>
+      </header>
+
+      <div class="prose">
+        <p>
+          While the Next.js App Router promotes React Server Components and Server Actions for internal UI mutations, building a public or partner-facing RESTful API remains a core architectural requirement for modern web applications. Third-party integrations, mobile clients (iOS and Android), and automated webhooks all rely on deterministic HTTP semantics.
+        </p>
+        <p>
+          By pairing Next.js <strong>Route Handlers</strong> with Supabase's PostgreSQL engine and the <code>@supabase/ssr</code> authentication package, you can assemble production-grade, type-safe REST endpoints that enforce strict access control and robust payload validation.
+        </p>
+
+        <h2>1. Next.js Route Handlers: The App Router Standard</h2>
+        <p>
+          Route Handlers are defined in files named <code>route.ts</code> (or <code>route.js</code>) inside the <code>app/api</code> directory. Unlike the legacy Pages Router <code>pages/api</code> API routes which relied on Node.js <code>req</code> and <code>res</code> streams, modern Route Handlers use native Web standard <code>Request</code> and <code>Response</code> interfaces.
+        </p>
+
+        <h2>2. Production Blueprint: RESTful Resource Handler</h2>
+        <p>
+          Below is a production-ready implementation of a REST collection endpoint (<code>/api/v1/projects</code>) supporting both paginated <code>GET</code> and validated <code>POST</code> operations:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>app/api/v1/projects/route.ts</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { z } from 'zod';
+
+// 1. Strict Request Validation Schema
+const createProjectSchema = z.object({
+  name: z.string().min(3).max(64),
+  description: z.string().max(256).optional(),
+  organization_id: z.string().uuid(),
+});
+
+// 2. Helper to Initialize SSR-Safe Supabase Client
+function getSupabase() {
+  const cookieStore = cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    }
+  );
+}
+
+// GET /api/v1/projects (Paginated List)
+export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
+  const searchParams = request.nextUrl.searchParams;
+  const limit = Math.min(Number(searchParams.get('limit')) || 20, 100);
+  const offset = Number(searchParams.get('offset')) || 0;
+
+  // Verify User Session
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized: Valid bearer token required' }, { status: 401 });
+  }
+
+  // Fetch Rows (Subject to PostgreSQL Row Level Security)
+  const { data: projects, error, count } = await supabase
+    .from('projects')
+    .select('*', { count: 'exact' })
+    .range(offset, offset + limit - 1)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    data: projects,
+    pagination: {
+      total: count,
+      limit,
+      offset,
+    },
+  }, { status: 200 });
+}
+
+// POST /api/v1/projects (Create New Resource)
+export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
+
+  // Authentication Guard
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Payload Validation
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Malformed JSON payload' }, { status: 400 });
+  }
+
+  const parsed = createProjectSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({
+      error: 'Validation Error',
+      details: parsed.error.issues,
+    }, { status: 422 });
+  }
+
+  // Insert into Database
+  const { data: newProject, error: dbError } = await supabase
+    .from('projects')
+    .insert([
+      {
+        name: parsed.data.name,
+        description: parsed.data.description,
+        organization_id: parsed.data.organization_id,
+        owner_id: user.id,
+      },
+    ])
+    .select()
+    .single();
+
+  if (dbError) {
+    return NextResponse.json({ error: dbError.message }, { status: 400 });
+  }
+
+  return NextResponse.json({ data: newProject }, { status: 201 });
+}</code></pre>
+        </div>
+
+        <h2>3. REST Semantics & HTTP Status Code Discipline</h2>
+        <p>
+          High-quality APIs are predictable. Ensure your Route Handlers return precise RFC-compliant HTTP status codes:
+        </p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Status Code</th>
+                <th>Standard Meaning</th>
+                <th>When to Use in Next.js + Supabase</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>200 OK</strong></td>
+                <td>Successful read or update</td>
+                <td>Returning GET query data or PATCH updates</td>
+              </tr>
+              <tr>
+                <td><strong>201 Created</strong></td>
+                <td>Resource created successfully</td>
+                <td>Returning newly inserted rows on POST</td>
+              </tr>
+              <tr>
+                <td><strong>400 Bad Request</strong></td>
+                <td>Malformed client payload</td>
+                <td>JSON syntax parsing errors</td>
+              </tr>
+              <tr>
+                <td><strong>401 Unauthorized</strong></td>
+                <td>Missing or invalid credentials</td>
+                <td>Missing or expired Supabase JWT session</td>
+              </tr>
+              <tr>
+                <td><strong>403 Forbidden</strong></td>
+                <td>Authenticated but lacks permissions</td>
+                <td>User authenticated, but RLS denied action</td>
+              </tr>
+              <tr>
+                <td><strong>422 Unprocessable Entity</strong></td>
+                <td>Validation schema failed</td>
+                <td>Zod validation errors on fields</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>4. Rate Limiting with Upstash Redis at the Edge</h2>
+        <p>
+          Exposing unthrottled API routes invites distributed denial-of-service (DDoS) and credential stuffing attacks. Wrap critical endpoints using sliding-window rate limiters:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>lib/ratelimit.ts</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
+export const ratelimiter = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(50, '10 s'), // 50 requests per 10 seconds
+  analytics: true,
+});</code></pre>
+        </div>
+
+        <div class="callout">
+          <div class="callout-title">Architectural Note: RLS Double-Defense</div>
+          <p>
+            Even if an attacker bypasses application-level routing logic or exploits an unchecked query parameter, PostgreSQL Row Level Security (RLS) ensures that the database itself refuses to return unauthorized rows. Always maintain security at both the application gateway and the database engine.
+          </p>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>A technical engineering publication focused on minimalist web architecture, database design, and cloud performance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="../index.html">Articles Directory</a></li>
+            <li><a href="building-restful-apis-supabase-nextjs.html">RESTful APIs</a></li>
+            <li><a href="setting-up-supabase-authentication.html">Supabase Auth</a></li>
+            <li><a href="structuring-relational-databases-in-supabase.html">Database Schemas</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="../privacy.html">Privacy Policy</a></li>
+            <li><a href="../terms.html">Terms of Service</a></li>
+            <li><a href="../disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. All rights reserved. Strict dark theme.</span>
+        <span>Built with pure HTML, CSS, and Vanilla JS.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

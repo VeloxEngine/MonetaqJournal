@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monetaq Tech Journal | Minimalist Web Architecture & Systems</title>
+  <meta name="description" content="A strict dark minimalist engineering publication exploring modern web architecture, Next.js, Supabase, Cloudflare edge computing, and UI design systems.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <!-- Header & Navigation -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo" id="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="index.html" class="active">Overview</a></li>
+          <li><a href="#articles">Articles</a></li>
+          <li><a href="#principles">Philosophy</a></li>
+          <li><a href="privacy.html">Privacy</a></li>
+          <li><a href="terms.html">Terms</a></li>
+          <li><a href="disclaimer.html">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="hero-tag">
+        <span class="dot"></span>
+        <span>Systems Engineering &bull; Monetaq Volume 2026</span>
+      </div>
+      <h1 class="hero-title">Engineering essays on cloud infrastructure, databases, and minimalist interfaces.</h1>
+      <p class="hero-subtitle">
+        A technical journal dedicated to the craft of high-performance web systems. No bloated frameworks, no unnecessary abstractions—just pure architecture, deterministic code, and refined design.
+      </p>
+    </section>
+
+    <!-- Filter & Search Controls -->
+    <section class="filter-bar" id="controls">
+      <div class="tag-pills" id="tag-filters">
+        <button class="pill-btn active" data-filter="all">All Essays (10)</button>
+        <button class="pill-btn" data-filter="cloud">Cloud & Edge</button>
+        <button class="pill-btn" data-filter="database">Databases & SQL</button>
+        <button class="pill-btn" data-filter="performance">Performance & CDN</button>
+        <button class="pill-btn" data-filter="design">UI & Design</button>
+        <button class="pill-btn" data-filter="security">Security & DevOps</button>
+      </div>
+
+      <div class="search-input-wrapper">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="search-input" placeholder="Search essays or topics..." aria-label="Search articles">
+      </div>
+    </section>
+
+    <!-- Articles Grid -->
+    <section class="posts-grid" id="articles">
+
+      <!-- Post 1 -->
+      <article class="post-card" data-tag="cloud">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Cloud & Deployment</span>
+            <span>6 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/deploying-nextjs-on-vercel.html">The Ultimate Guide to Deploying Next.js on Vercel</a>
+          </h2>
+          <p class="post-excerpt">
+            Master the production deployment pipeline for Next.js on Vercel. Explore serverless region co-location, Incremental Static Regeneration (ISR) edge caching, preview environments, and custom DNS.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/deploying-nextjs-on-vercel.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 2 -->
+      <article class="post-card" data-tag="database">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Backend & Auth</span>
+            <span>7 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/setting-up-supabase-authentication.html">Setting Up Supabase Authentication for Beginners</a>
+          </h2>
+          <p class="post-excerpt">
+            A beginner-friendly architectural walkthrough of GoTrue identity engine, signed JWT session cookies, and wiring PostgreSQL Row Level Security (RLS) directly to authenticated user UUIDs.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/setting-up-supabase-authentication.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 3 -->
+      <article class="post-card" data-tag="performance">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Performance & CDN</span>
+            <span>8 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/how-to-configure-cloudflare-for-maximum-speed.html">How to Configure Cloudflare for Maximum Website Speed</a>
+          </h2>
+          <p class="post-excerpt">
+            Unlock sub-50ms TTFB across 310+ global POPs. Implement HTTP/3 QUIC transport, 0-RTT resumption, 103 Early Hints, Brotli compression, and Tiered Cache hierarchies with custom Cache Rules.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/how-to-configure-cloudflare-for-maximum-speed.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 4 -->
+      <article class="post-card" data-tag="database">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Databases & SQL</span>
+            <span>9 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/structuring-relational-databases-in-supabase.html">Structuring Relational Databases in Supabase</a>
+          </h2>
+          <p class="post-excerpt">
+            Move past unstructured document stores. Design production-grade schemas with 3NF normalization, foreign key cascading constraints, B-Tree and GIN indexes, and automated PostgreSQL triggers.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/structuring-relational-databases-in-supabase.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 5 -->
+      <article class="post-card" data-tag="cloud">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Cloud & Edge</span>
+            <span>8 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/edge-computing-vercel-vs-cloudflare-workers.html">Edge Computing Explained: Vercel vs. Cloudflare Workers</a>
+          </h2>
+          <p class="post-excerpt">
+            An in-depth technical analysis comparing V8 Isolates with micro-containers. Evaluate cold starts, state synchronization across Cloudflare D1/KV vs Vercel Edge Config, and solve the database latency paradox.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/edge-computing-vercel-vs-cloudflare-workers.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 6 -->
+      <article class="post-card" data-tag="design">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">UI/UX & Design</span>
+            <span>8 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/creating-clean-dark-minimalist-ui-system.html">Creating a Clean, Dark Minimalist UI System from Scratch</a>
+          </h2>
+          <p class="post-excerpt">
+            The design engineering behind Apple-grade interfaces. Calibrated dark luminance vs pitch black, hairline borders, typography optical tracking, and fluid spring physics using pure vanilla CSS.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/creating-clean-dark-minimalist-ui-system.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 7 -->
+      <article class="post-card" data-tag="cloud">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Engineering Stacks</span>
+            <span>7 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/best-programming-stacks-fast-prototyping.html">The Best Programming Stacks for Fast Prototyping</a>
+          </h2>
+          <p class="post-excerpt">
+            Compare modern prototyping architectures: Next.js + Supabase, Hono + Vite on Cloudflare, and HTMX + FastAPI. Maximize time-to-first-feature without falling into early microservice traps.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/best-programming-stacks-fast-prototyping.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 8 -->
+      <article class="post-card" data-tag="security">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Security & DevOps</span>
+            <span>8 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/managing-environment-variables-safely.html">Managing Environment Variables Safely in Cloud Deployments</a>
+          </h2>
+          <p class="post-excerpt">
+            Harden your secret pipelines. Prevent client bundle exposure via accidental public prefixes, enforce fail-fast Zod schema validation at build time, and centralize secrets using Doppler and Gitleaks hooks.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/managing-environment-variables-safely.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 9 -->
+      <article class="post-card" data-tag="database">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">API & Backend</span>
+            <span>9 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/building-restful-apis-supabase-nextjs.html">Building RESTful APIs with Supabase and Next.js</a>
+          </h2>
+          <p class="post-excerpt">
+            Construct production-ready REST collections with Next.js App Router Route Handlers. Implement RFC-compliant status codes, paginated GET queries, Zod validation, and edge rate-limiting.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/building-restful-apis-supabase-nextjs.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+      <!-- Post 10 -->
+      <article class="post-card" data-tag="performance">
+        <div>
+          <div class="post-meta-top">
+            <span class="post-tag">Frontend & Assets</span>
+            <span>7 min read</span>
+          </div>
+          <h2 class="post-title">
+            <a href="posts/how-to-optimize-vector-icons-web-performance.html">How to Optimize Vector Icons for Web Performance</a>
+          </h2>
+          <p class="post-excerpt">
+            Eliminate DOM node bloat and hydration drag. Set up automated SVGO pipelines, evaluate external SVG sprite sheets vs inline components, and leverage CSS currentColor for fluid dark themes.
+          </p>
+        </div>
+        <div class="post-footer">
+          <span>By Engineering Team</span>
+          <a href="posts/how-to-optimize-vector-icons-web-performance.html" class="read-link">Read Essay &rarr;</a>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- Architectural Philosophy Section -->
+    <section class="hero-section" id="principles" style="padding-top: 2rem;">
+      <div class="hero-tag">
+        <span class="dot" style="background: var(--accent-blue); box-shadow: 0 0 8px var(--accent-blue);"></span>
+        <span>The Monetaq Engineering Manifesto</span>
+      </div>
+      <h2>Engineered for simplicity, durability, and extreme performance.</h2>
+      <p>
+        Modern software development has become burdened by transient dependencies, oversized bundlers, and decorative complexity. We believe that enduring web architecture is built upon three non-negotiable principles:
+      </p>
+      <ul>
+        <li><strong>Deterministic Simplicity:</strong> Every layer of abstraction must justify its presence. Native web standards (Fetch, ES Modules, CSS Custom Properties) should be favored over fragile dependencies.</li>
+        <li><strong>Engine-Level Integrity:</strong> Security and relational consistency belong in the database engine (via PostgreSQL Constraints & RLS) and edge proxies, not scattered across fragile frontend code.</li>
+        <li><strong>Calibrated Aesthetics:</strong> Design should feel quiet and focused. Dark interfaces require balanced luminance, hairline borders, and disciplined typography to let the technical content command full attention.</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>
+            An independent engineering publication covering full-stack cloud infrastructure, database architecture, edge computing, and minimalist user interfaces.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Topics</h4>
+          <ul>
+            <li><a href="posts/deploying-nextjs-on-vercel.html">Next.js & Vercel</a></li>
+            <li><a href="posts/structuring-relational-databases-in-supabase.html">Supabase PostgreSQL</a></li>
+            <li><a href="posts/how-to-configure-cloudflare-for-maximum-speed.html">Cloudflare Performance</a></li>
+            <li><a href="posts/creating-clean-dark-minimalist-ui-system.html">Minimalist UI Systems</a></li>
+            <li><a href="posts/managing-environment-variables-safely.html">Cloud Secrets & DevOps</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+            <li><a href="disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. Strict dark theme. All rights reserved.</span>
+        <span>Pure HTML5 &bull; Vanilla CSS &bull; Vanilla JavaScript</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Configure Cloudflare for Maximum Website Speed | Monetaq Tech Journal</title>
+  <meta name="description" content="An exhaustive engineering guide to optimizing Cloudflare CDN: Tiered Cache, 103 Early Hints, HTTP/3, Brotli, and custom edge cache rules for sub-50ms TTFB.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <header class="site-header">
+    <div class="header-container">
+      <a href="../index.html" class="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">Overview</a></li>
+          <li><a href="../index.html#articles">Articles</a></li>
+          <li><a href="../privacy.html">Privacy</a></li>
+          <li><a href="../terms.html">Terms</a></li>
+          <li><a href="../disclaimer.html">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="article-container">
+      <header class="article-header">
+        <a href="../index.html" class="back-nav">&larr; Back to all essays</a>
+        <span class="post-tag">Performance & CDN</span>
+        <h1>How to Configure Cloudflare for Maximum Website Speed</h1>
+        <div class="article-meta">
+          <span>By Engineering Team</span>
+          <span>&bull;</span>
+          <span>October 2026</span>
+          <span>&bull;</span>
+          <span>8 min read</span>
+          <span>&bull;</span>
+          <span>Infrastructure Performance</span>
+        </div>
+      </header>
+
+      <div class="prose">
+        <p>
+          Cloudflare sits in front of millions of web properties as a reverse proxy, filtering malicious traffic and terminating TLS connections across its globally distributed Anycast network spanning 310+ cities. However, many developers leave their Cloudflare dashboard on default settings, capturing only a fraction of its potential throughput. By systematically tuning HTTP/3 transport protocols, Tiered Cache hierarchies, Early Hints, and fine-grained Cache Rules, you can reduce origin load by over 85% and drive Time to First Byte (TTFB) down to single-digit milliseconds.
+        </p>
+
+        <h2>1. Network Protocol Modernization: HTTP/3 and 0-RTT</h2>
+        <p>
+          The foundation of web latency starts with the transport handshake. Traditional TCP + TLS 1.3 requires two roundtrips before payload transmission begins. On mobile networks with 100ms packet round-trip times, that introduces an automatic 200ms penalty.
+        </p>
+        <ul>
+          <li><strong>Enable HTTP/3 (with QUIC):</strong> Under <em>Speed &rarr; Optimization &rarr; Protocol</em>, turn on HTTP/3. QUIC operates over UDP, eliminating head-of-line blocking when packet loss occurs on unstable cellular networks.</li>
+          <li><strong>Enable 0-RTT Connection Resumption:</strong> This enables returning visitors to send their initial GET request alongside their TLS resumption ticket, eliminating the initial negotiation handshake completely.</li>
+        </ul>
+
+        <h2>2. Next-Gen Compression: Brotli and Minification</h2>
+        <p>
+          Gzip has been superseded by <strong>Brotli</strong>, which achieves 14% to 26% higher compression ratios on modern text payloads (HTML, CSS, JSON, and JS bundles). Ensure Brotli compression is strictly enforced in Cloudflare settings. Note that while Cloudflare provides auto-minification, modern frontend frameworks (Vite, Next.js, esbuild) already minify assets at compile time. Enabling origin-side source maps with pre-minified builds is generally cleaner than letting proxy layers re-parse your JavaScript syntax.
+        </p>
+
+        <h2>3. Turbocharging Critical Rendering with 103 Early Hints</h2>
+        <p>
+          The <code>103 Early Hints</code> HTTP status code is one of the most impactful performance innovations in modern web standards. While your origin server is still busy executing SQL queries or assembling server-rendered templates, Cloudflare can immediately emit a 103 response containing <code>Link: &lt;...&gt;; rel=preload</code> headers to the browser.
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>HTTP/1.1 103 Early Hints Example</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>HTTP/1.1 103 Early Hints
+Link: &lt;/css/style.css&gt;; rel=preload; as=style
+Link: &lt;/fonts/inter-var.woff2&gt;; rel=preload; as=font; crossorigin
+Link: &lt;/js/main.js&gt;; rel=modulepreload</code></pre>
+        </div>
+
+        <p>
+          The browser begins downloading your heavy CSS stylesheets and typography assets concurrently while the origin is still computing the final HTML payload, cutting Largest Contentful Paint (LCP) by up to 350ms.
+        </p>
+
+        <h2>4. Maximizing Edge Cache Hit Ratio with Cache Rules</h2>
+        <p>
+          The older "Page Rules" feature has been superseded by Cloudflare's modern <strong>Cache Rules</strong> engine. Instead of passing every static request back to your cloud compute instance, configure edge caching rules with explicit TTL overrides:
+        </p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Path Pattern</th>
+                <th>Edge Cache TTL</th>
+                <th>Browser TTL</th>
+                <th>Purge Strategy</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/assets/*</code>, <code>/_next/static/*</code></td>
+                <td>1 Year (31536000s)</td>
+                <td>1 Year (immutable)</td>
+                <td>Content-hashed URL</td>
+              </tr>
+              <tr>
+                <td><code>/blog/*</code>, <code>/docs/*</code></td>
+                <td>7 Days (604800s)</td>
+                <td>10 Minutes</td>
+                <td>Webhook Purge on Publish</td>
+              </tr>
+              <tr>
+                <td><code>/api/dynamic/*</code></td>
+                <td>Bypass Cache</td>
+                <td>No-Store</td>
+                <td>N/A</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>5. Tiered Cache and Argo Smart Routing</h2>
+        <p>
+          In a standard CDN model, if a user in Tokyo requests a resource that was previously cached only in Frankfurt, the Tokyo point of presence (POP) fetches the file directly from your origin in Europe. 
+        </p>
+        <p>
+          <strong>Tiered Cache</strong> solves this by establishing regional tier data centers (e.g., London, Chicago, Singapore). The Tokyo POP queries the regional Singapore tier first. If the file is present in Singapore, it avoids trans-oceanic transit to your origin server entirely. Enabling Tiered Cache is completely free on Cloudflare and delivers an immediate boost to your global cache hit ratio.
+        </p>
+
+        <div class="callout">
+          <div class="callout-title">Architecture Tip: Beware Rocket Loader with Modern SPAs</div>
+          <p>
+            Cloudflare's legacy "Rocket Loader" alters script injection order to defer JavaScript execution. While effective on older jQuery sites, it can break hydration sequences in React, Vue, and Next.js applications. Keep Rocket Loader disabled when deploying modern component frameworks.
+          </p>
+        </div>
+
+        <h2>6. Summary Performance Checklist</h2>
+        <ol>
+          <li>SSL/TLS mode set to <strong>Full (Strict)</strong> with TLS 1.3 enforced.</li>
+          <li>HTTP/3 (QUIC) and 0-RTT Connection Resumption enabled.</li>
+          <li>103 Early Hints turned on.</li>
+          <li>Brotli enabled; verify <code>content-encoding: br</code> in response headers.</li>
+          <li>Tiered Cache topology enabled.</li>
+          <li>Cache Rules created for immutable static assets (1-year TTL).</li>
+          <li>Rocket Loader disabled for React/Next.js hydration safety.</li>
+        </ol>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>A technical engineering publication focused on minimalist web architecture, database design, and cloud performance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="../index.html">Articles Directory</a></li>
+            <li><a href="how-to-configure-cloudflare-for-maximum-speed.html">Cloudflare Speed</a></li>
+            <li><a href="edge-computing-vercel-vs-cloudflare-workers.html">Edge Computing</a></li>
+            <li><a href="how-to-optimize-vector-icons-web-performance.html">Vector Icons</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="../privacy.html">Privacy Policy</a></li>
+            <li><a href="../terms.html">Terms of Service</a></li>
+            <li><a href="../disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. All rights reserved. Strict dark theme.</span>
+        <span>Built with pure HTML, CSS, and Vanilla JS.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

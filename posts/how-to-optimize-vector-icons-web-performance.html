@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Optimize Vector Icons for Web Performance | Monetaq Tech Journal</title>
+  <meta name="description" content="A comprehensive engineering guide to optimizing SVG vector icons: SVGO pipelines, precision rounding, SVG sprites vs inline components, and DOM node impact.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <header class="site-header">
+    <div class="header-container">
+      <a href="../index.html" class="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">Overview</a></li>
+          <li><a href="../index.html#articles">Articles</a></li>
+          <li><a href="../privacy.html">Privacy</a></li>
+          <li><a href="../terms.html">Terms</a></li>
+          <li><a href="../disclaimer.html">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="article-container">
+      <header class="article-header">
+        <a href="../index.html" class="back-nav">&larr; Back to all essays</a>
+        <span class="post-tag">Frontend & Assets</span>
+        <h1>How to Optimize Vector Icons for Web Performance</h1>
+        <div class="article-meta">
+          <span>By Engineering Team</span>
+          <span>&bull;</span>
+          <span>October 2026</span>
+          <span>&bull;</span>
+          <span>7 min read</span>
+          <span>&bull;</span>
+          <span>Asset Optimization</span>
+        </div>
+      </header>
+
+      <div class="prose">
+        <p>
+          Scalable Vector Graphics (SVG) are the gold standard for web iconography. Unlike raster PNG or WebP assets, SVGs remain razor-sharp on Retina displays, scale infinitely, and can be dynamically styled with CSS. However, web developers frequently underestimate the hidden performance overhead that unoptimized vector assets impose on client devices. Raw SVG files exported directly from Figma, Adobe Illustrator, or Sketch are filled with unnecessary metadata, excessive floating-point coordinate precision, and hidden layers that bloat bundle sizes and degrade rendering performance.
+        </p>
+
+        <h2>1. The Hidden Costs: DOM Node Overhead and Hydration Drag</h2>
+        <p>
+          When you inline SVGs directly inside modern UI components (e.g., Lucide React or Heroicons inside a table with 50 rows), each icon injects an <code>&lt;svg&gt;</code> element along with multiple <code>&lt;path&gt;</code>, <code>&lt;circle&gt;</code>, and <code>&lt;g&gt;</code> children into the Document Object Model:
+        </p>
+        <ul>
+          <li><strong>DOM Tree Bloat:</strong> 50 table rows with 4 icons each introduces over 800 additional DOM nodes. Heavy DOM trees slow down layout recalculations and garbage collection cycles on lower-tier mobile hardware.</li>
+          <li><strong>Virtual DOM Hydration:</strong> In SSR frameworks like Next.js and Nuxt, inlined SVG trees must be serialized in the initial HTML and re-parsed during client hydration, delaying Time to Interactive (TTI).</li>
+        </ul>
+
+        <h2>2. Automated Optimization with SVGO</h2>
+        <p>
+          The industry benchmark tool for vector cleanup is <strong>SVGO</strong> (SVG Optimizer). It strips invisible layers, removes design software namespaces, merges adjacent path segments, and rounds excessive decimal coordinates.
+        </p>
+        <p>
+          Here is a production-grade <code>svgo.config.js</code> configuration that yields up to 70% file size reductions:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>svgo.config.js</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>module.exports = {
+  multipass: true, // Multiple passes to find optimal reductions
+  plugins: [
+    'removeDoctype',
+    'removeXMLProcInst',
+    'removeComments',
+    'removeMetadata',
+    'removeEditorsNSData',
+    'cleanupAttrs',
+    'mergeStyles',
+    'inlineStyles',
+    'minifyStyles',
+    'cleanupIds',
+    'removeUselessDefs',
+    'cleanupNumericValues',
+    'convertColors',
+    'removeUnknownsAndDefaults',
+    'removeNonInheritableGroupAttrs',
+    'removeUselessStrokeAndFill',
+    'cleanupEnableBackground',
+    'removeHiddenElems',
+    'removeEmptyText',
+    'convertShapeToPath',
+    'moveElemsAttrsToGroup',
+    'moveGroupAttrsToElems',
+    'collapseGroups',
+    'convertPathData',
+    'convertTransform',
+    'removeEmptyAttrs',
+    'removeEmptyContainers',
+    'mergePaths',
+    'removeUnusedNS',
+    'sortDefsChildren',
+    'removeTitle',
+    'removeDesc',
+    {
+      name: 'cleanupNumericValues',
+      params: {
+        floatPrecision: 2, // Round 12.3456789 down to 12.35
+      },
+    },
+  ],
+};</code></pre>
+        </div>
+
+        <h2>3. Delivery Architecture: SVG Sprites vs. Inline Components</h2>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Delivery Strategy</th>
+                <th>Pros</th>
+                <th>Cons</th>
+                <th>Optimal Use Case</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>External SVG Sprite Sheet</strong></td>
+                <td>Zero DOM bloat; browser caches sprite sheet; instant rendering via &lt;use&gt;</td>
+                <td>Requires minor tooling build step</td>
+                <td>Production dashboards, large tables, high icon count applications</td>
+              </tr>
+              <tr>
+                <td><strong>Inline React / Vue Component</strong></td>
+                <td>Zero network request; effortless dynamic prop styling</td>
+                <td>Increases JS bundle size; bloats DOM nodes</td>
+                <td>Hero elements, single standalone landing page icons</td>
+              </tr>
+              <tr>
+                <td><strong>CSS Mask Image</strong></td>
+                <td>Completely decoupled from HTML; styled purely with CSS background-color</td>
+                <td>Cannot style multiple internal paths differently</td>
+                <td>Monochromatic UI buttons and navigation links</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>4. Implementing High-Performance SVG Sprites</h2>
+        <p>
+          By combining all your application icons into a single optimized <code>sprite.svg</code> file loaded over HTTP/2, your markup remains extraordinarily clean:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>index.html / Component</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>&lt;!-- Lightweight, cached vector icon reference --&gt;
+&lt;svg class="icon" aria-hidden="true" width="20" height="20"&gt;
+  &lt;use href="/icons/sprite.svg#chevron-right" /&gt;
+&lt;/svg&gt;</code></pre>
+        </div>
+
+        <p>
+          In CSS, apply <code>currentColor</code> to allow icons to automatically inherit text colors and transition effortlessly between hover and dark states:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>css/icons.css</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>.icon {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+  vertical-align: middle;
+  transition: fill 0.15s ease;
+}</code></pre>
+        </div>
+
+        <div class="callout">
+          <div class="callout-title">Performance Summary</div>
+          <p>
+            By running icons through SVGO and transitioning high-frequency icons to cached SVG sprite sheets, you drastically reduce bundle payloads, cut memory consumption during virtual DOM hydration, and deliver fluid 60fps rendering even on budget mobile devices.
+          </p>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>A technical engineering publication focused on minimalist web architecture, database design, and cloud performance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="../index.html">Articles Directory</a></li>
+            <li><a href="how-to-optimize-vector-icons-web-performance.html">Vector Icons</a></li>
+            <li><a href="creating-clean-dark-minimalist-ui-system.html">Minimalist UI</a></li>
+            <li><a href="how-to-configure-cloudflare-for-maximum-speed.html">Cloudflare Speed</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="../privacy.html">Privacy Policy</a></li>
+            <li><a href="../terms.html">Terms of Service</a></li>
+            <li><a href="../disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. All rights reserved. Strict dark theme.</span>
+        <span>Built with pure HTML, CSS, and Vanilla JS.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Ultimate Guide to Deploying Next.js on Vercel | Monetaq Tech Journal</title>
+  <meta name="description" content="A comprehensive, production-ready guide to deploying Next.js applications on Vercel with zero downtime, custom domains, edge middleware, and optimal caching.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div id="reading-progress"></div>
+
+  <header class="site-header">
+    <div class="header-container">
+      <a href="../index.html" class="brand-logo">
+        <span class="brand-symbol">M</span>
+        <span>Monetaq Journal</span>
+      </a>
+      <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation">&#9776;</button>
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">Overview</a></li>
+          <li><a href="../index.html#articles">Articles</a></li>
+          <li><a href="../privacy.html">Privacy</a></li>
+          <li><a href="../terms.html">Terms</a></li>
+          <li><a href="../disclaimer.html">Disclaimer</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="article-container">
+      <header class="article-header">
+        <a href="../index.html" class="back-nav">&larr; Back to all essays</a>
+        <span class="post-tag">Cloud & Deployment</span>
+        <h1>The Ultimate Guide to Deploying Next.js on Vercel</h1>
+        <div class="article-meta">
+          <span>By Engineering Team</span>
+          <span>&bull;</span>
+          <span>October 2026</span>
+          <span>&bull;</span>
+          <span>6 min read</span>
+          <span>&bull;</span>
+          <span>Production Engineering</span>
+        </div>
+      </header>
+
+      <div class="prose">
+        <p>
+          Deploying Next.js to Vercel is often cited as the gold standard of developer experience in modern web engineering. Because Vercel develops Next.js, their serverless edge infrastructure is tailored directly to the framework's internal primitives: Server Components, Incremental Static Regeneration (ISR), Route Handlers, and Edge Middleware. However, transitioning from a local development environment (`npm run dev`) to a hardened, resilient production pipeline requires understanding the nuances of build optimization, caching tiers, preview environments, and deployment safeguards.
+        </p>
+
+        <h2>1. Architecture Overview: How Vercel Runs Next.js</h2>
+        <p>
+          When you push a commit to your linked Git repository, Vercel initiates an automated containerized build process. Instead of treating Next.js as a monolith Node.js server, Vercel decomposes your application into discrete execution primitives:
+        </p>
+        <ul>
+          <li><strong>Static Assets:</strong> Pre-rendered HTML, client-side JavaScript bundles, and CSS are pushed directly to the global Edge CDN across 300+ edge locations worldwide.</li>
+          <li><strong>Serverless Functions:</strong> Dynamic API routes and SSR pages are compiled into AWS Lambda/Vercel Serverless runtimes located in chosen regions close to your databases.</li>
+          <li><strong>Edge Functions:</strong> Lightweight V8 isolate workers that execute sub-millisecond middleware before requests hit the cache or origin servers.</li>
+        </ul>
+
+        <div class="callout">
+          <div class="callout-title">Production Best Practice: Serverless Region Co-location</div>
+          <p>
+            Always set your Vercel Serverless Function Region to match your primary database cluster (for example, AWS us-east-1 or Frankfurt eu-central-1). Misconfigured region mismatches introduce unnecessary network roundtrip latency on every database transaction.
+          </p>
+        </div>
+
+        <h2>2. Preparing the Application for Production</h2>
+        <p>
+          Before triggering the initial deploy, ensure your repository contains a standardized <code>next.config.js</code> configured for strict type checking, image optimization, and standalone compilation when required:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>next.config.mjs</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns'],
+  },
+};
+
+export default nextConfig;</code></pre>
+        </div>
+
+        <h2>3. Step-by-Step Vercel CLI Deployment Flow</h2>
+        <p>
+          While web dashboard Git integration is standard, automating CI/CD through the command line offers granular control over deployment states and validation testing.
+        </p>
+
+        <h3>Step 1: Install and Authenticate the Vercel CLI</h3>
+        <p>Install the official CLI globally or run it via npx:</p>
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code># Install or run via npx
+npx vercel login
+
+# Link your local project to a Vercel project
+npx vercel link</code></pre>
+        </div>
+
+        <h3>Step 2: Pulling Remote Environment Variables</h3>
+        <p>
+          Avoid syncing <code>.env</code> files manually over communication channels. Pull verified cloud variables directly into your local development sandbox:
+        </p>
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code># Pull development environment variables
+npx vercel env pull .env.local</code></pre>
+        </div>
+
+        <h3>Step 3: Staging and Production Deployments</h3>
+        <p>
+          Running <code>vercel</code> creates a distinct preview deployment URL with isolated logging. Adding the <code>--prod</code> flag triggers the canonical production release:
+        </p>
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>Terminal</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code># 1. Build and verify preview deployment
+npx vercel
+
+# 2. Deploy directly to primary production domain
+npx vercel --prod</code></pre>
+        </div>
+
+        <h2>4. Configuring Incremental Static Regeneration (ISR)</h2>
+        <p>
+          ISR allows you to retain the sub-10ms response times of static assets while dynamically rebuilding stale pages in the background. In the Next.js App Router, specify the `revalidate` segment option:
+        </p>
+
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span>app/blog/[slug]/page.tsx</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>// Revalidate this page in the edge cache every 60 seconds
+export const revalidate = 60;
+
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  const post = await fetch(`https://api.example.com/posts/${params.slug}`, {
+    next: { revalidate: 60 }
+  }).then(res => res.json());
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{post.title}&lt;/h1&gt;
+      &lt;p&gt;{post.content}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+        </div>
+
+        <h2>5. Custom Domains and DNS Routing</h2>
+        <p>
+          To attach your production domain (e.g., <code>example.com</code>), navigate to <strong>Project Settings &rarr; Domains</strong> in your Vercel Dashboard. Vercel automatically issues an SSL certificate through Let's Encrypt once your DNS records propagate:
+        </p>
+        <ul>
+          <li><strong>Apex Domain (`example.com`):</strong> Configure an <code>A</code> record pointing to <code>76.76.21.21</code>.</li>
+          <li><strong>Subdomain (`www` or `app`):</strong> Configure a <code>CNAME</code> record pointing to <code>cname.vercel-dns.com</code>.</li>
+        </ul>
+
+        <h2>6. Post-Deployment Monitoring and Core Web Vitals</h2>
+        <p>
+          Once live, leverage Vercel's native Speed Insights dashboard to monitor Real User Monitoring (RUM) metrics: Largest Contentful Paint (LCP), Interaction to Next Paint (INP), and Cumulative Layout Shift (CLS). By tracking these numbers against cold-start serverless traces, you can identify unoptimized heavy server components or blocking database waterfalls early in your release cycle.
+        </p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-logo">
+            <span class="brand-symbol">M</span>
+            <span>Monetaq Journal</span>
+          </div>
+          <p>A technical engineering publication focused on minimalist web architecture, database design, and cloud performance.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="../index.html">Articles Directory</a></li>
+            <li><a href="../index.html#about">Architecture Philosophy</a></li>
+            <li><a href="deploying-nextjs-on-vercel.html">Next.js Deployment</a></li>
+            <li><a href="edge-computing-vercel-vs-cloudflare-workers.html">Edge Computing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal & Compliance</h4>
+          <ul>
+            <li><a href="../privacy.html">Privacy Policy</a></li>
+            <li><a href="../terms.html">Terms of Service</a></li>
+            <li><a href="../disclaimer.html">Technical Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Monetaq Journal. All rights reserved. Strict dark theme.</span>
+        <span>Built with pure HTML, CSS, and Vanilla JS.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>
